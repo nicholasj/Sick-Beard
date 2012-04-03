@@ -252,6 +252,12 @@ class XBMCMetadata(generic.GenericMetadata):
                 if displayseason_text != None:
                     displayseason.text = displayseason_text
 
+            displayafterseason = etree.SubElement( episode, "displayafterseason" )
+            if myEp.has_key('airsafter_season'):
+                displayafterseason_text = myEp['airsafter_season']
+                if displayafterseason_text != None:
+                    displayafterseason.text = displayafterseason_text
+
             displayepisode = etree.SubElement( episode, "displayepisode" )
             if myEp.has_key('airsbefore_episode'):
                 displayepisode_text = myEp['airsbefore_episode']
