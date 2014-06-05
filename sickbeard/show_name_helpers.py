@@ -29,7 +29,7 @@ import datetime
 
 from name_parser.parser import NameParser, InvalidNameException
 
-resultFilters = ["sub(pack|s|bed)", "nlsub(bed|s)?", "swesub(bed)?",
+resultFilters = ["sub(bed|ed|pack|s)", "(dk|fin|heb|kor|nl|nor|nordic|pl|swe)sub(bed|ed|s)?",
                  "(dir|sample|sub|nfo)fix", "sample", "(dvd)?extras",
                  "dub(bed)?"]
 
@@ -66,10 +66,12 @@ def filterBadReleases(name):
         return True
 
     # if any of the bad strings are in the name then say no
-    for x in resultFilters + sickbeard.IGNORE_WORDS.split(','):
-        if re.search('(^|[\W_])' + x + '($|[\W_])', check_string, re.I):
-            logger.log(u"Invalid scene release: " + name + " contains " + x + ", ignoring it", logger.DEBUG)
-            return False
+    for ignore_word in resultFilters + sickbeard.IGNORE_WORDS.split(','):
+        ignore_word = ignore_word.strip()
+        if ignore_word:
+            if re.search('(^|[\W_])' + ignore_word + '($|[\W_])', check_string, re.I):
+                logger.log(u"Invalid scene release: " + name + " contains " + ignore_word + ", ignoring it", logger.DEBUG)
+                return False
 
     return True
 
@@ -131,14 +133,10 @@ def makeSceneSeasonSearchString(show, segment, extraSearchType=None):
         numseasons = int(numseasonsSQlResult[0][0])
 
         seasonStrings = ["S%02d" % segment]
-        # since nzbmatrix allows more than one search per request we search SxEE results too
-        if extraSearchType == "nzbmatrix":
-            seasonStrings.append("%ix" % segment)
 
     showNames = set(makeSceneShowSearchStrings(show))
 
     toReturn = []
-    term_list = []
 
     # search each show name
     for curShow in showNames:
@@ -152,23 +150,6 @@ def makeSceneSeasonSearchString(show, segment, extraSearchType=None):
                 for cur_season in seasonStrings:
                     toReturn.append(curShow + "." + cur_season)
 
-        # nzbmatrix is special, we build a search string just for them
-        elif extraSearchType == "nzbmatrix":
-            if numseasons == 1:
-                toReturn.append('"' + curShow + '"')
-            elif numseasons == 0:
-                toReturn.append('"' + curShow + ' ' + str(segment).replace('-', ' ') + '"')
-            else:
-                term_list = [x + '*' for x in seasonStrings]
-                if show.air_by_date:
-                    term_list = ['"' + x + '"' for x in term_list]
-
-                toReturn.append('"' + curShow + '"')
-
-    if extraSearchType == "nzbmatrix":
-        toReturn = ['+(' + ','.join(toReturn) + ')']
-        if term_list:
-            toReturn.append('+(' + ','.join(term_list) + ')')
     return toReturn
 
 
